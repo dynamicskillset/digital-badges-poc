@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Build docs/reports/poc-architecture.pdf from architecture.md + standards.md.
 # Requires: pandoc, a PDF engine (e.g. pdflatex from MacTeX / TeX Live),
+# fvextra (included with TeX Live / MacTeX) for wrapping long code lines,
 # Node (per .nvmrc), mermaid-filter (npm install -g mermaid-filter), Chromium/Puppeteer.
 # For SVG diagrams (format=svg in fences): librsvg (brew install librsvg) for rsvg-convert.
 # On Windows, use mermaid-filter.cmd as the filter instead of mermaid-filter.
@@ -18,6 +19,7 @@ fi
 mkdir -p docs/reports
 
 exec pandoc -s --toc \
+  -H "$ROOT/scripts/pandoc/pdf-code-linebreaks.tex" \
   -F mermaid-filter \
   --lua-filter="$ROOT/scripts/pandoc/rewrite-crossdoc-links.lua" \
   docs/architecture.md docs/standards.md \

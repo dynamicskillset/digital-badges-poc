@@ -1,0 +1,8 @@
+% Allow long lines in Pandoc/Skylighting code blocks to wrap in PDF (fvextra extends fancyvrb).
+% breakanywhere helps long tokens; breakafter adds break points after / and - (URLs, hyphenated paths).
+\usepackage{fvextra}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{
+  breaklines,
+  breakanywhere,
+  breakafter={/,-},
+  commandchars=\\\{\}}
