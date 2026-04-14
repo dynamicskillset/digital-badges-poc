@@ -4,3 +4,6 @@ docs/reports
 # Environment files (examples are version controlled, rendered files are not)
 .env.signing
 .env.transaction
+
+# Not used except for local secret notes
+.env 
