@@ -66,6 +66,9 @@ jobs:
           echo "DEPLOYED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" > deploy/.deploy
           echo "GIT_REF=${{ github.event.inputs.git_ref }}" >> deploy/.deploy
           echo "GIT_SHA=$(git rev-parse HEAD)" >> deploy/.deploy
+      
+      - name: Install rsync                                                   
+          run: sudo apt-get install -y rsync
 
       - name: Deploy to server (atomic rsync)
         run: |
