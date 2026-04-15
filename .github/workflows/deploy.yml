@@ -68,7 +68,7 @@ jobs:
           echo "GIT_SHA=$(git rev-parse HEAD)" >> deploy/.deploy
       
       - name: Install rsync                                                   
-          run: sudo apt-get install -y rsync
+        run: sudo apt-get install -y rsync
 
       - name: Deploy to server (atomic rsync)
         run: |
