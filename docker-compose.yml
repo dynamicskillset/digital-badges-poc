@@ -39,6 +39,25 @@ services:
       - digital-badges-network
     restart: unless-stopped
 
+  # Postgres - Persistence layer for ORCA (internal only, not exposed externally)
+  postgres:
+    image: postgres:16-alpine
+    container_name: digital-badges-postgres
+    env_file:
+      - .env.postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orcaadmin -d orca"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - digital-badges-network
+    restart: unless-stopped
+
   # Redis - Ephemeral cache
   redis:
     image: redis:7-alpine
@@ -51,3 +70,6 @@ services:
 networks:
   digital-badges-network:
     driver: bridge
+
+volumes:
+  postgres-data:
