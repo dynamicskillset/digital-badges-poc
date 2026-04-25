@@ -3,17 +3,24 @@ version: '3.8'
 services:
   # Reverse proxy - entry point for all external traffic
   nginx:
-    image: nginx:alpine
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    image: digital-badges-nginx:local
     container_name: digital-badges-nginx
+    entrypoint: ["/usr/local/bin/nginx-entrypoint.sh"]
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - acme-certs:/etc/nginx/certs:ro
+      - ./nginx/docker-entrypoint.sh:/usr/local/bin/nginx-entrypoint.sh:ro
+      - acme-certs:/etc/nginx/certs
     depends_on:
-      - transaction-service
-      - orca
+      orca:
+        condition: service_healthy
+      transaction-service:
+        condition: service_started
     networks:
       - digital-badges-network
     restart: unless-stopped
@@ -33,7 +40,7 @@ services:
       - acme-state:/acme.sh
       - acme-certs:/certs
     networks:
-      - digital-badges-network
+      - acme-egress
     # No restart policy: this container is invoked via `docker compose
     # run` for issuance and renewal, not run continuously.
     profiles: ["tools"]
@@ -78,7 +85,7 @@ services:
     volumes:
       - orca-uploads:/app/dev-uploads
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3000/healthz"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/healthz"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -97,7 +104,7 @@ services:
       - postgres-data:/var/lib/postgresql/data
       - ./postgres/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U orcaadmin -d orca"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-orcaadmin} -d ${POSTGRES_DB:-orca}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -117,6 +124,13 @@ services:
 
 networks:
   digital-badges-network:
+    driver: bridge
+  # acme-egress: dedicated bridge for the acme.sh tools container.
+  # DNS-01 via Mythic Beasts only needs outbound internet; this network
+  # keeps acme.sh off the same bridge as postgres / orca / signing /
+  # transaction-service to reduce blast radius if the upstream image
+  # were ever compromised.
+  acme-egress:
     driver: bridge
 
 volumes:

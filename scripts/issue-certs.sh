@@ -16,15 +16,31 @@ if [ ! -f .env.acme ]; then
     exit 1
 fi
 
+# Extract LE_EMAIL from .env.acme. We do this in the host shell rather
+# than letting acme.sh source the env file so we can fail fast with a
+# clear message if the operator leaves it blank. cut -f2- preserves any
+# '=' that might appear later in the value; the two tr calls strip both
+# "double" and 'single' quotes.
+LE_EMAIL="$(grep '^LE_EMAIL=' .env.acme | head -n1 | cut -d= -f2- | tr -d '"' | tr -d "'")"
+
+if [ -z "${LE_EMAIL}" ]; then
+    echo "LE_EMAIL is not set in .env.acme. Let's Encrypt requires an account email for expiry notifications." >&2
+    echo "Edit .env.acme and set LE_EMAIL=<address>, then re-run." >&2
+    exit 1
+fi
+
 # Register the LE account on first run (idempotent).
 docker compose run --rm acme acme.sh \
     --register-account \
-    -m "$(grep '^LE_EMAIL=' .env.acme | cut -d= -f2 | tr -d '\"')"
+    -m "${LE_EMAIL}"
 
-# Issue the wildcard via Mythic Beasts DNS-01.
+# Issue the wildcard via Mythic Beasts DNS-01. --keylength ec-256 makes
+# this an ECC cert so it lands in the same path that --install-cert --ecc
+# reads from below.
 docker compose run --rm acme acme.sh \
     --issue \
     --dns dns_mythicbeasts \
+    --keylength ec-256 \
     -d digitalbadges.scot \
     -d "*.digitalbadges.scot"
 
@@ -35,7 +51,11 @@ docker compose run --rm acme acme.sh \
     --fullchain-file /certs/digitalbadges.scot.fullchain.pem \
     --key-file       /certs/digitalbadges.scot.key.pem
 
-# Reload nginx to pick up the new cert.
-docker compose exec nginx nginx -s reload
+# Validate the rendered nginx config before reloading. `nginx -s reload`
+# returns 0 on some builds even with a broken config, so a plain reload
+# can leave the server in a degraded state. `nginx -t` (under `set -e`)
+# makes broken configs fail the script before we try to reload.
+docker compose exec -T nginx nginx -t
+docker compose exec -T nginx nginx -s reload
 
 echo "Cert issued and installed. nginx reloaded."

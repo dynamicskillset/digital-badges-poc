@@ -70,6 +70,7 @@ TLS is terminated at **nginx** using **Let's Encrypt** certificates. A single **
   # fine and won't hit Let's Encrypt rate limits.
   0 4 * * 1 root cd /opt/digital-badges-poc && \
       docker compose run --rm acme acme.sh --cron --home /acme.sh && \
+      docker compose exec -T nginx nginx -t && \
       docker compose exec -T nginx nginx -s reload >> /var/log/digital-badges-acme.log 2>&1
   ```
 
@@ -77,12 +78,12 @@ TLS is terminated at **nginx** using **Let's Encrypt** certificates. A single **
 
 - **Manual:**  
   `docker compose run --rm acme acme.sh --cron --home /acme.sh`  
-  then reload nginx as above if a cert was renewed.
+  then run nginx -t and nginx -s reload as above if a cert was renewed.
 
 **Where certificates live**
 
 - **`acme-state`** volume: acme.sh’s own account and state (mounted at `/acme.sh` in the `acme` container).
-- **`acme-certs`** volume: installed PEMs — `digitalbadges.scot.fullchain.pem` and `digitalbadges.scot.key.pem` under `/certs` in `acme`, mounted **read-only** into nginx at `/etc/nginx/certs`.
+- **`acme-certs`** volume: installed PEMs — `digitalbadges.scot.fullchain.pem` and `digitalbadges.scot.key.pem` under `/certs` in `acme`, mounted into nginx at `/etc/nginx/certs` (read/write so the entrypoint can write a short-lived self-signed cert before the first `issue-certs.sh` run, then the real cert from acme overwrites the same files).
 
 **HSTS note**
 
