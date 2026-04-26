@@ -87,7 +87,7 @@ jobs:
           # Auto-generated from template - DO NOT EDIT MANUALLY
           MYTHICBEASTS_USERNAME="${{ vars.ACME_MYTHICBEASTS_USERNAME }}"
           MYTHICBEASTS_PASSWORD="${{ secrets.ACME_MYTHICBEASTS_PASSWORD }}"
-          LE_EMAIL="${{ secrets.ACME_LE_EMAIL }}"
+          LE_EMAIL="${{ vars.ACME_LE_EMAIL }}"
           ACME_DOMAIN_LIST="-d digitalbadges.scot -d *.digitalbadges.scot"
           EOF
 
