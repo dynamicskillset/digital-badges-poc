@@ -80,13 +80,12 @@ services:
     healthcheck:
       test:
         - "CMD"
-        - "node"
-        - "-e"
-        - "require('net').createConnection(4006,'127.0.0.1').on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))"
+        - "/nodejs/bin/node"
+        - "/app/healthcheck.js"
       interval: 10s
-      timeout: 3s
+      timeout: 5s
       retries: 3
-      start_period: 10s
+      start_period: 30s
     networks:
       - digital-badges-network
     restart: unless-stopped

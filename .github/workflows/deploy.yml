@@ -47,6 +47,8 @@ jobs:
           TENANT_SEED_DEFAULT=${{ secrets.SIGN_TENANT_SEED_DEFAULT }}
           TENANT_SEED_TESTING=${{ secrets.SIGN_TENANT_SEED_TESTING }}
           TENANT_SEED_AWARDSNETWORK=${{ secrets.SIGN_TENANT_SEED_AWARDSNETWORK }}
+          HEALTH_CHECK_SERVICE_URL=http://localhost:4006/healthz
+          HEALTH_CHECK_SERVICE_NAME=signing-service
           EOF
 
           # Render transaction service env file
